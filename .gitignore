@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Docker volumes
+pgdata/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# Editor
+.vSCode/
+.idea/
