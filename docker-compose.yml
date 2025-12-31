@@ -1,23 +1,56 @@
-version: "3.8"
-
 services:
-  postgres:
+  # Postgres Database
+  db:
     image: postgres:15
-    container_name: ds_postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    container_name: inventory_order_db
+    restart: always
+    env_file: .env
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
 
+  # RabbitMQ for messaging
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: ds_rabbitmq
+    container_name: rabbitmq
+    env_file: .env
     ports:
       - "5672:5672"
       - "15672:15672"
 
+  # Inventory Service
+  inventory-service:
+    build: ./services/inventory-service
+    container_name: inventory-service
+    env_file: .env
+    ports:
+      - "8001:8000"  # Host:Container (different per service)
+    depends_on:
+      - db
+      - rabbitmq
+
+  # Order Service
+  order-service:
+    build: ./services/order-service
+    container_name: order-service
+    env_file: .env
+    ports:
+      - "8002:8000"
+    depends_on:
+      - db
+      - rabbitmq
+
+  # User & Notification Service
+  user-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    env_file: .env
+    ports:
+      - "8003:8000"
+    depends_on:
+      - db
+      - rabbitmq
+
 volumes:
-  pgdata:
+  db_data:
