@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=orders_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_uQOnaHz2Sh4g@ep-divine-smoke-ag79xo86-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require
+    depends_on:
+      - rabbitmq
+
+  worker:
+    build: .
+    command: python manage.py run_listener
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://neondb_owner:npg_uQOnaHz2Sh4g@ep-divine-smoke-ag79xo86-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require
+    depends_on:
+      - rabbitmq
+
+volumes:
+  postgres_data:
